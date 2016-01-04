@@ -1,0 +1,11 @@
+# Ignore RVM config
+.rvmrc
+
+# Ignore Gemfile lock
+Gemfile.lock
+
+# Ignore Mac FS files
+.DS_Store
+
+# Ignore Pow config
+.powrc
