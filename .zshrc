@@ -9,7 +9,7 @@ ZSH=$HOME/.oh-my-zsh
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
 ZSH_THEME="refined"
 
-# Override this VAR in theme
+# Override prompt in this theme
 PROMPT="%3~ %(?.%F{green}.%F{red})❯%f "
 
 
@@ -24,7 +24,7 @@ PROMPT="%3~ %(?.%F{green}.%F{red})❯%f "
 # DISABLE_AUTO_UPDATE="true"
 
 # Uncomment the following line to change how often to auto-update (in days).
-# export UPDATE_ZSH_DAYS=13
+# export UPDATE_ZSH_DAYS=14
 
 # Uncomment the following line to disable colors in ls.
 # DISABLE_LS_COLORS="true"
@@ -53,16 +53,18 @@ HIST_STAMPS="yyyy-mm-dd"
 
 # Which plugins would you like to load? (plugins can be found in ~/.oh-my-zsh/plugins/*)
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
-# Example format: plugins=(rails git textmate ruby lighthouse)
+# Example format: plugins=(rails chruby git textmate ruby lighthouse nvm nvm-auto)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git brew gem rbenv rails bundler postgres heroku docker vagrant pow nvm nvm-auto)
+plugins=(git brew gem rails bundler postgres heroku docker kubectl completion zsh)
+
+# zstyle :omz:plugins:ssh-agent agent-forwarding on
 
 source $ZSH/oh-my-zsh.sh
 
 # zsh-completions
 fpath=(/usr/local/share/zsh-completions $fpath)
 
-# User configuration
+#### User configuration ####
 
 # export MANPATH="/usr/local/man:$MANPATH"
 
@@ -75,14 +77,14 @@ export LC_CTYPE=en_US.UTF-8
 if [[ -n $SSH_CONNECTION ]]; then
   export EDITOR='nano'
 else
-  export EDITOR='atom'
+  export EDITOR='code'
 fi
 
 # Compilation flags
-export ARCHFLAGS="-arch x86_64"
+# export ARCHFLAGS="-arch x86_64"
 
 # SSH
-export SSH_KEY_PATH="~/.ssh/rsa_id"
+# export SSH_KEY_PATH="~/.ssh/rsa_id"
 
 ### Added for coreutils / GNU commands
 # export PATH="/usr/local/opt/coreutils/libexec/gnubin:$PATH"
@@ -91,11 +93,17 @@ export SSH_KEY_PATH="~/.ssh/rsa_id"
 ### Added by Postgres.app
 export PATH="/Applications/Postgres.app/Contents/Versions/latest/bin:$PATH"
 
+### Added by Visual Studio Code
+export PATH="$PATH:/Applications/Visual Studio Code.app/Contents/Resources/app/bin"
+
 ### Added by Homebrew (recommended by brew doctor)
 export PATH="/usr/local/bin:$PATH"
 
 ### Added for Ruby gems
 export PATH="/usr/local/opt/ruby/bin:$PATH"
+
+### Compile ruby using jemalloc instead of malloc (make sure you have jemalloc installed on your system)
+# export RUBY_CONFIGURE_OPTS="--with-jemalloc"
 
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
@@ -105,24 +113,41 @@ export RBENV_ROOT="$HOME/.rbenv"
 export PATH="$RBENV_ROOT/bin:$PATH"
 eval "$(rbenv init - --no-rehash)"
 
+# assuming that rbenv was installed to `~/.rbenv`
+FPATH=~/.rbenv/completions:"$FPATH"
+autoload -U compinit
+compinit
+
+### Added by chruby
+# source $HOMEBREW_PREFIX/opt/chruby/share/chruby/chruby.sh
+
+### Added by Helm
+# export HELM_HOME="$(helm home)"
+
 ### Added by Bundler: load custom scripts and binstubs
-export PATH="./bin:./.bundle/bin:$HOME/.bin:$PATH"
+export PATH="./.bundle/bin:$HOME/.bin:$PATH"
 
 # to load NVM
-export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+# export NVM_DIR="$HOME/.nvm"
+# [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
 
 # autoload nvm from .nvmrc file when entering directory
 # nvm_auto_switch
+# export PATH="$NVM_DIR:$PATH"
+# export ANDROID_HOME="/usr/local/opt/android-sdk"
 
-export PATH="$NVM_DIR:$PATH"
-export ANDROID_HOME="/usr/local/opt/android-sdk"
+# to load n for managing node versions
+export N_PREFIX=$HOME/.n
+export PATH=$N_PREFIX/bin:$PATH
 
 # to load PYENV
 export PYENV_ROOT="$HOME/.pyenv"
 export PATH="$PYENV_ROOT/bin:$PATH"
 eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
+
+# poetry
+export PATH="$HOME/.local/bin:$PATH"
 
 # to enable direnv hooks
 # eval "$(direnv hook zsh)"
@@ -141,24 +166,63 @@ fi
 # For a full list of active aliases, run `alias`.
 #
 # Example aliases
-alias zshconfig="atom ~/.zshrc"
-alias ohmyzsh="atom ~/.oh-my-zsh"
+alias zshconfig="code ~/.zshrc"
+alias ohmyzsh="code ~/.oh-my-zsh"
 
 # update outdated packeges installed by homebrew
 alias buio="brew update && brew install `brew outdated`"
 
-# disable correction
-alias vagrant="nocorrect vagrant"
+# alias default Python version to Python 3
+alias python=python3
 
-# alias hub as git
-if [ ! "$(which hub)" ]; then
-  alias git=hub
-fi
+# fuzzy search
+source <(fzf --zsh)
 
 # file search
 function f() { find . -iname "*$1*" ${@:2} }
 function r() { grep "$1" ${@:2} -R . }
 
+# interactive process killing
+function pkill() {
+  ps aux | fzf --height 40% --layout=reverse --prompt="Select process to kill: " | awk '{print $2}' | xargs -r sudo kill
+}
+
 # mkdir and cd
 function mkcd() { mkdir -p "$@" && cd "$_"; }
-[ -s "$NVM_DIR/bash_completion" ] && \. "$NVM_DIR/bash_completion"  # This loads nvm bash_completion
+
+# The next line updates PATH for the Google Cloud SDK.
+# if [ -f '/Users/roman/Downloads/google-cloud-sdk/path.zsh.inc' ]; then source '/Users/roman/Downloads/google-cloud-sdk/path.zsh.inc'; fi
+
+# The next line enables shell command completion for gcloud.
+# if [ -f '/Users/roman/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then source '/Users/roman/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# Heroku autocomplete setup
+HEROKU_AC_ZSH_SETUP_PATH=/Users/roman/Library/Caches/heroku/autocomplete/zsh_setup && test -f $HEROKU_AC_ZSH_SETUP_PATH && source $HEROKU_AC_ZSH_SETUP_PATH;
+
+# Shortcut to open with Visual Studio Code
+function code {
+    if [[ $# = 0 ]]
+    then
+        open -a "Visual Studio Code"
+    else
+        local argPath="$1"
+        [[ $1 = /* ]] && argPath="$1" || argPath="$PWD/${1#./}"
+        open -a "Visual Studio Code" "$argPath"
+    fi
+}
+
+### Avvoka specific settings
+
+# allows to skip Vite build output from logs, to keep the noise down.
+export VITE_RUBY_HIDE_BUILD_CONSOLE_OUTPUT=true
+
+# mysql/mariadb client
+export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
+export LDFLAGS="-L/opt/homebrew/opt/mysql-client/lib"
+export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
+
+# for cli_tools
+export PATH="/Users/roman/Projects/avvoka/cli_tools/bin:$PATH"
+
+# skip yarn git hooks in Avvoka app repo
+export SKIP_SIMPLE_GIT_HOOKS="1"
