@@ -1,3 +1,12 @@
+# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
+# Initialization code that may require console input (password prompts, [y/n]
+# confirmations, etc.) must go above this block; everything else may go below.
+if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
+  source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
+fi
+
+source "$(brew --prefix gitstatus)/gitstatus.prompt.zsh"
+
 # If you come from bash you might have to change your $PATH.
 # export PATH=$HOME/bin:/usr/local/bin:$PATH
 
@@ -7,10 +16,10 @@ ZSH=$HOME/.oh-my-zsh
 # Set name of the theme to load. Optionally, if you set this to "random"
 # it'll load a random theme each time that oh-my-zsh is loaded.
 # See https://github.com/robbyrussell/oh-my-zsh/wiki/Themes
-ZSH_THEME="refined"
+ZSH_THEME="powerlevel10k/powerlevel10k"
 
 # Override prompt in this theme
-PROMPT="%3~ %(?.%F{green}.%F{red})❯%f "
+PROMPT="%3~ %(?.%F{green}.%F{red})[%*]❯%f "
 
 
 # Uncomment the following line to use case-sensitive completion.
@@ -55,7 +64,7 @@ HIST_STAMPS="yyyy-mm-dd"
 # Custom plugins may be added to ~/.oh-my-zsh/custom/plugins/
 # Example format: plugins=(rails chruby git textmate ruby lighthouse nvm nvm-auto)
 # Add wisely, as too many plugins slow down shell startup.
-plugins=(git brew gem rails bundler postgres heroku docker kubectl completion zsh)
+plugins=(dotenv git brew gem rails bundler postgres heroku docker kubectl completion zsh zsh-autosuggestions mise)
 
 # zstyle :omz:plugins:ssh-agent agent-forwarding on
 
@@ -108,13 +117,19 @@ export PATH="/usr/local/opt/ruby/bin:$PATH"
 ### Added by the Heroku Toolbelt
 export PATH="/usr/local/heroku/bin:$PATH"
 
+### Added for Mise to automatically load dotenv files in any directory.
+export MISE_ENV_FILE=".env"
+
+### Added by Mise
+eval "$(mise activate zsh)"
+
 ### Added by RBENV
-export RBENV_ROOT="$HOME/.rbenv"
-export PATH="$RBENV_ROOT/bin:$PATH"
-eval "$(rbenv init - --no-rehash)"
+# export RBENV_ROOT="$HOME/.rbenv"
+# export PATH="$RBENV_ROOT/bin:$PATH"
+# eval "$(rbenv init - --no-rehash)"
 
 # assuming that rbenv was installed to `~/.rbenv`
-FPATH=~/.rbenv/completions:"$FPATH"
+# FPATH=~/.rbenv/completions:"$FPATH"
 autoload -U compinit
 compinit
 
@@ -126,6 +141,9 @@ compinit
 
 ### Added by Bundler: load custom scripts and binstubs
 export PATH="./.bundle/bin:$HOME/.bin:$PATH"
+
+### Use application binstubs
+export PATH="./bin:$PATH"
 
 # to load NVM
 # export NVM_DIR="$HOME/.nvm"
@@ -211,18 +229,53 @@ function code {
     fi
 }
 
+# extra diagnostics for git status on error
+GITSTATUS_LOG_LEVEL=DEBUG
+
 ### Avvoka specific settings
 
 # allows to skip Vite build output from logs, to keep the noise down.
-export VITE_RUBY_HIDE_BUILD_CONSOLE_OUTPUT=true
+# export VITE_RUBY_HIDE_BUILD_CONSOLE_OUTPUT=true
+
+# use custom port to avoid conflicts with Apple Airplay Receiver service which runs on port 7000 which is used by nego editor
+# export editor_url="localhost:7007"
+# export editor_internal_url="127.0.0.1:7007"
+# export EDITOR_LOCAL_PORT="7007"
 
 # mysql/mariadb client
 export PATH="/opt/homebrew/opt/mysql-client/bin:$PATH"
 export LDFLAGS="-L/opt/homebrew/opt/mysql-client/lib"
 export CPPFLAGS="-I/opt/homebrew/opt/mysql-client/include"
+export PKG_CONFIG_PATH="/opt/homebrew/opt/mysql-client/lib/pkgconfig"
 
 # for cli_tools
 export PATH="/Users/roman/Projects/avvoka/cli_tools/bin:$PATH"
 
+# for selenium
+# download proper chromedriver version using: selenium-manager --browser chrome --debug --cache-path ~/Projects/avvoka and link it or move it to /usr/local/bin/
+# export PATH="/Users/roman/Projects/avvoka/chromedriver_mac_arm64:$PATH"
+
 # skip yarn git hooks in Avvoka app repo
 export SKIP_SIMPLE_GIT_HOOKS="1"
+
+### End of Avvoka specific settings
+
+# pnpm
+export PNPM_HOME="/Users/roman/Library/pnpm"
+case ":$PATH:" in
+  *":$PNPM_HOME:"*) ;;
+  *) export PATH="$PNPM_HOME:$PATH" ;;
+esac
+# pnpm end
+
+# for ruby-build
+# export CC="clang"
+# export CXX="clang++"
+# validate with: ruby -rrbconfig -e'p RbConfig::CONFIG["CC"]' -e'p RbConfig::CONFIG["CXX"]'
+# see more: https://github.com/sass/sassc-ruby/issues/225#issuecomment-2440875907
+
+# ruby config options
+# export RUBY_CONFIGURE_OPTS="--with-openssl-dir=$(brew --prefix openssl)"
+
+# To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
+[[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
